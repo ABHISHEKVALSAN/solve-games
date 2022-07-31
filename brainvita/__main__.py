@@ -28,7 +28,8 @@ INVALID_POS = [(0,0),(0,1),
                (6,0),(6,1),
                (6,5),(6,6)]
 CORRECT_MOVES = []
-moves = ['right','left','down','up']
+COUNTER=1
+moves = ['right','down','left','up']
 
 def is_valid_pos(x,y):
     if x<0 or y<0:
@@ -145,30 +146,8 @@ def can_modify_matrix(x,y,mov,mat):
         print('Unknown Error')
         raise
 
-def inverse_modify(x,y,mov,mat):
-    if mov == 'right':
-        mat[x][y]=1
-        mat[x][y+1]=1
-        mat[x][y+2]=0
-        return mat
-    elif mov == 'down':
-        mat[x][y]=1
-        mat[x+1][y]=1
-        mat[x+2][y]=0
-        return mat
-    elif mov=='left':
-        mat[x][y]=1
-        mat[x][y-1]=1
-        mat[x][y-2]=0
-        return mat
-    elif mov=='up':
-        mat[x][y]=1
-        mat[x-1][y]=1
-        mat[x-2][y]=0
-        return mat
-
 def can_inverse_modify(x,y,mov,mat):
-    if len(mat)!=len(mat[0]) or len(mat)==MATRIX_LENGTH:
+    if len(mat)!=len(mat[0]) or len(mat)!=MATRIX_LENGTH:
         return False
     if (x,y) in INVALID_POS:
         return False
@@ -213,6 +192,28 @@ def can_inverse_modify(x,y,mov,mat):
         else:
             return False
 
+def inverse_modify(x,y,mov,mat):
+    if mov == 'right':
+        mat[x][y]=1
+        mat[x][y+1]=1
+        mat[x][y+2]=0
+        return mat
+    elif mov == 'down':
+        mat[x][y]=1
+        mat[x+1][y]=1
+        mat[x+2][y]=0
+        return mat
+    elif mov=='left':
+        mat[x][y]=1
+        mat[x][y-1]=1
+        mat[x][y-2]=0
+        return mat
+    elif mov=='up':
+        mat[x][y]=1
+        mat[x-1][y]=1
+        mat[x-2][y]=0
+        return mat
+
 def is_same_matrix(mat1, mat2):
     for i in range(MATRIX_LENGTH):
         for j in range(MATRIX_LENGTH):
@@ -220,37 +221,55 @@ def is_same_matrix(mat1, mat2):
                 return False
     return True
 
-def is_game_solved(mat):
-    matrix_sum=0
+def is_solution(mat):
+    if mat[3][3]!=1:
+        return False
+    matrix_sum = 0
     for row in mat:
-        matrix_sum+=sum(row)
-    if matrix_sum==49:
-        return True
-    return False
+        matrix_sum +=sum(row)
+    if matrix_sum!=49:
+        return False
+    return True
+
+def is_inverse_solution(mat):
+    if mat[3][3]!=0:
+        return False
+    matrix_sum = 0
+    for row in mat:
+        matrix_sum +=sum(row)
+    if matrix_sum!=80:
+        return False
+    return True
+
+def save_solution(CORRECT_MOVES):
+    global COUNTER
+    print(CORRECT_MOVES)
+    import pandas as pd
+    df = pd.DataFrame(CORRECT_MOVES, columns=['x','y','move'])
+    df.to_csv('inverse_solution_'+str(COUNTER)+'.csv',index=False)
+    COUNTER+=1
 
 def next_step(mat):
     global CORRECT_MOVES
-    if is_same_matrix(mat, FINAL_MATRIX):
-        print('Solved!!!')
-        print(CORRECT_MOVES)
-        sys.exit(0)
-    # display_matrix(mat)
-    # time.sleep(2)
+    if is_inverse_solution(mat):
+        save_solution(CORRECT_MOVES)
+        return
     i=0
     while i<MATRIX_LENGTH:
         j=0
         while j<MATRIX_LENGTH:
             for mov in moves:
-                if can_modify_matrix(i,j,mov,mat):
+                if can_inverse_modify(i,j,mov,mat):
                     CORRECT_MOVES.append([i,j,mov])
-                    mat = modify_matrix(i,j,mov,mat)
-                    next_step(mat)
                     mat = inverse_modify(i,j,mov,mat)
+                    next_step(mat)
+                    mat = modify_matrix(i,j,mov,mat)
                     CORRECT_MOVES.pop()
             j+=1
         i+=1
 
-# display_matrix(INITIAL_MATRIX)
-# print(can_modify_matrix(3,1,'right',INITIAL_MATRIX))
-next_step(INITIAL_MATRIX)
-print('GAME IS NOT SOLVED!!!')
+def main():
+    next_step(FINAL_MATRIX)
+
+if __name__=='__main__':
+    main()
